@@ -15,10 +15,23 @@ jobs:
         node-version: lts/*
     - name: Install dependencies
       run: npm ci
-    - name: Install Playwright Browsers
+
+    # Pull requests: quick smoke check on Chromium only
+    - name: Install Chromium (pull requests)
+      if: github.event_name == 'pull_request'
+      run: npx playwright install --with-deps chromium
+    - name: Run smoke tests (pull requests)
+      if: github.event_name == 'pull_request'
+      run: npx playwright test --grep "@smoke" --project=chromium
+
+    # Pushes to main: full suite on all browsers
+    - name: Install browsers (push)
+      if: github.event_name == 'push'
       run: npx playwright install --with-deps
-    - name: Run Playwright tests
+    - name: Run full suite (push)
+      if: github.event_name == 'push'
       run: npx playwright test
+
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
